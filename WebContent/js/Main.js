@@ -211,7 +211,7 @@ states.Start.prototype={
 }
 states.Main.prototype={
 	preload: function() {
-	    this.load.image('bullet', 'assets/sprites/shmup-bullet.png');
+	    this.load.image('bullet', 'assets/sprites/bullet.png');
 	    this.load.image('enemy_bullet', 'assets/sprites/enemy-bullet.png');
 	    this.load.image('ship', 'assets/sprites/thrust_ship.png');
 	    this.load.image('enemy_one','assets/sprites/enemy_ship_1.png');
@@ -235,7 +235,7 @@ states.Main.prototype={
 	    // Set the features of weapon
 	    weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
 	    weapon.bulletLifespan = 2000;
-	    weapon.bulletSpeed = 600;
+	    weapon.bulletSpeed = 900;
 	    weapon.fireRate = 600;
 	    weapon.bulletWorldWrap = false;
 	    
@@ -410,8 +410,13 @@ function enemy_bullet_collision (enemy, bullet) {
 }
 
 function player_bullet_collision(obj1, obj2){
+	if(invTime+invDuration>=game.time.now){
+		console.log("inv");
+		return;
+	}
 	obj2.kill();
 	life--;
+	invTime = game.time.now;
 	if(life==0){
 		//game over
 		obj1.kill();
@@ -423,7 +428,12 @@ function player_bullet_collision(obj1, obj2){
 }
 
 function player_enemy_collision(enemy, spaceship){
+	if(invTime+invDuration>=game.time.now){
+		console.log("inv");
+		return;
+	}
 	life--;
+	invTime = game.time.now;
 	if(life==0){
 		//game over
 		spaceship.kill();
