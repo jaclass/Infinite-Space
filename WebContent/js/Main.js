@@ -19,8 +19,10 @@ var trophyrate = 1;
 var enemyBullets
 var firingTimer1 = 0;
 var invTime;
-var invDuration=500;
+var invDuration=600;
 var enemies=[];
+var roundEndTimer;
+var isRoundEnd = true;
 
 var enemyFactory = {
 	generateRandomEnemy: function(){
@@ -279,8 +281,21 @@ states.Main.prototype={
 	    explosions.createMultiple(30, 'kaboom');
 	    explosions.forEach(setupInvader, this);
 	    
+	    // Round Legend
+	    bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY-200, 'carrier_command','Round '+round,33);
+		bmpText.anchor.setTo(0.5);
+		bmpText.lifespan = 1500;
 	    
-	    enemyFactory.generateRandomEnemy();
+	    //Set the timer before the round begin
+	    roundEndTimer = game.time.create(false);
+	    roundEndTimer.add(1500,function(){
+	    	enemyFactory.generateRandomEnemy();
+	    	isRoundEnd = false;
+	    },this);
+	    roundEndTimer.start();
+	    
+	    
+	    
 	    
 	    
 	    // add keys for move
@@ -365,15 +380,20 @@ states.Main.prototype={
 		
 		
 		
-		
 		//next round
-		if(trophies.countLiving()==0 && isAlive==0){
+		if(trophies.countLiving()==0 && isAlive==0 && !isRoundEnd){
+			isRoundEnd = true;
 			round++;
 			bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY-200, 'carrier_command','Round '+round,33);
 			bmpText.anchor.setTo(0.5);
-			bmpText.lifespan = 600;
+			bmpText.lifespan = 1500;
 			enemies.length = 0;
-			enemyFactory.generateRandomEnemy();
+			//enemyFactory.generateRandomEnemy();
+			roundEndTimer.add(1500,function(){
+		    	enemyFactory.generateRandomEnemy();
+		    	isRoundEnd = false;
+		    },this);
+
 		}
 	},
 	
@@ -410,11 +430,12 @@ function enemy_bullet_collision (enemy, bullet) {
 }
 
 function player_bullet_collision(obj1, obj2){
+	obj2.kill();
 	if(invTime+invDuration>=game.time.now){
 		console.log("inv");
 		return;
 	}
-	obj2.kill();
+	spaceshipShinning();
 	life--;
 	invTime = game.time.now;
 	if(life==0){
@@ -432,6 +453,7 @@ function player_enemy_collision(enemy, spaceship){
 		console.log("inv");
 		return;
 	}
+	spaceshipShinning();
 	life--;
 	invTime = game.time.now;
 	if(life==0){
@@ -442,6 +464,13 @@ function player_enemy_collision(enemy, spaceship){
 	    explosion.play('kaboom', 30, false, true);
 		console.log("Game Over!");
 	}
+}
+
+function spaceshipShinning(){
+	spaceship.alpha = 0;
+	var tween = game.add.tween(spaceship).to( { alpha: 1 }, 200, "Linear", true);
+	tween.repeat(3,0);
+	spaceship.alpha = 1;
 }
 
 function player_trophy_collision(obj1, obj2){
