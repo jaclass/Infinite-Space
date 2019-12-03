@@ -19,7 +19,8 @@ var explosions;
 var trophyrate = 1;
 var enemyBullets
 var firingTimer1 = 0;
-
+var invTime;
+var invDuration=500;
 
 
 states.Main = function(game){};
@@ -104,6 +105,7 @@ states.Main.prototype={
 	    this.load.image('enemy_one','assets/sprites/enemy_ship_1.png');
 	    this.load.spritesheet('trophy', 'assets/sprites/bluemetal_20x20x4.png', 20, 20);
 	    this.load.spritesheet('kaboom', 'assets/games/explode.png', 128, 128);
+	    this.load.spritesheet('enemy_two', 'assets/sprites/invader32x32x4.png', 32, 32);
 	    this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
 	    
 	},
@@ -166,6 +168,7 @@ states.Main.prototype={
 	    
 	    //enemy: straight mode
 	    enemies_one = this.add.physicsGroup(Phaser.Physics.ARCADE);
+	    enemies_two = this.add.physicsGroup(Phaser.Physics.ARCADE);
 	    enemyFactory.generateRandomEnemy();
 	    
 	    
@@ -239,7 +242,7 @@ states.Main.prototype={
 		
 		if(enemies_one.countLiving()>0){
 			enemies_one.forEachAlive(function(enemy){
-				enemy.update();
+				enemy.fire();
 		    });
 		}
 		
@@ -266,26 +269,43 @@ states.Main.prototype={
 var enemyFactory = {
 	generateRandomEnemy: function(){
 		this.generateEnemyOne(800, 200);
+		this.generateEnemyOne(800, 500);
+		this.generateEnemyTwo(800, 200);
 	},
 
 	generateEnemyOne: function(x, y){
 		var enemy_one = enemies_one.create(x, y, 'enemy_one');
 	    enemy_one.body.velocity.set(150, 0);
 	    enemy_one.lives = 6;
-	    enemy_one.update = function(){
-	    	enemyFire(enemy_one);
+	    enemy_one.fire = function(){
+	    	if(enemy_one.lives>0)
+	    		enemyFire(enemy_one);
 	    }
 	    enemies_one.setAll('body.collideWorldBounds', true);
 	    enemies_one.setAll('body.bounce.x', 1);
 	    enemies_one.setAll('body.bounce.y', 1);
 	},
+	
+	generateEnemyTwo: function(x, y){
+		var enemy_two = enemies_one.create(x, y, 'enemy_two');
+		enemy_two.body.velocity.set(200, 200);
+		enemy_two.lives = 2;
+		enemy_two.animations.add('fly', [ 0, 1, 2, 3 ], 20, true);
+		enemy_two.play('fly');
+		enemy_two.fire = function(){
+			return ;
+		}
+		enemies_one.setAll('body.collideWorldBounds', true);
+	    enemies_one.setAll('body.bounce.x', 1);
+	    enemies_one.setAll('body.bounce.y', 1);
+	}
 }
 
 function enemyFire(enemy){
 	firingTimer = game.time.now;
 	if(firingTimer1<game.time.now){
-    	enemyBullet = enemyBullets.getFirstExists(false);
-    	enemyBullet.reset(enemy.body.x, enemy.body.y);
+    	var enemyBullet = enemyBullets.getFirstExists(false);
+    	enemyBullet.reset(enemy.body.x, enemy.body.y+8);
         game.physics.arcade.moveToObject(enemyBullet,spaceship,200);
 		//console.log(1);
         firingTimer1 = game.time.now + 2000;
