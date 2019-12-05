@@ -23,23 +23,93 @@ var invDuration=500;
 var enemies=[];
 var roundEndTimer;
 var isRoundEnd = true;
+var enemyBullets2;
+var enemyBullets3;
 
 var enemyFactory = {
+	// generate enemy in random at the beginning of round
 	generateRandomEnemy: function(){
-		this.generateEnemyThree(800,100);
-		this.generateEnemyTwo(800,200);
-		this.generateEnemyTwo(800,300);
+		if(round%5==1){ // Boss round
+			this.generateEnemyBoss(game.world.centerX-80, 0);	
+			return ;
+		}
+		var enemyNum = Math.min(game.rnd.integerInRange(round, round+2),8);
+		console.log(enemyNum);
+		
+		// generate positions of enemys
+		var positions = [];
+		while(positions.length < enemyNum){
+		    var r = game.rnd.integerInRange(0, 10);
+		    if(positions.indexOf(r) === -1) 
+		    	positions.push(r);
+		}
+		for(var i=0;i<enemyNum;i++){
+			positions[i] = positions[i]*60 + game.rnd.integerInRange(0, 15);
+		}
+		console.log(positions);
+		
+		// randomly generate enemy
+		for(var i=0;i<enemyNum;i++){
+			if(round<5){	//only enemy type: 1,2,3
+				let seed = game.rnd.integerInRange(1, 3);
+				switch(seed){
+					case 1:	// type one
+						this.generateEnemyOne(1060,positions[i]);
+						break;
+					case 2: // type two
+						this.generateEnemyTwo(1060,positions[i],150,150);
+						break;
+					case 3: // type three
+						this.generateEnemyThree(1060,positions[i]);
+						break;
+					default:
+						break;
+				}
+			}else{	// all types
+				let seed = game.rnd.integerInRange(1, 5);
+				switch(seed){
+					case 1:	// type one
+						this.generateEnemyOne(1060,positions[i]);
+						break;
+					case 2: // type two
+						this.generateEnemyTwo(1060,positions[i],150,150);
+						break;
+					case 3: // type three
+						this.generateEnemyThree(1060,positions[i]);
+						break;
+					case 4: // type three
+						this.generateEnemyFour(1060,positions[i]);
+						break;
+					case 5: // type three
+						this.generateEnemyFive(1060,positions[i]);
+						break;
+					default:
+						break;
+				}
+			}
+		}
+
+		
+		
 	},
 
 	generateEnemyOne: function(x, y){
 		enemies.push(new EnemyOne(game, spaceship, enemyBullets, x, y)); 
 	},
-	
-	generateEnemyTwo: function(x, y){
-		enemies.push(new EnemyTwo(game, spaceship, enemyBullets, x, y)); 
+	generateEnemyTwo: function(x, y, vx, vy){
+		enemies.push(new EnemyTwo(game, spaceship, enemyBullets, x, y, vx, vy)); 
 	},
 	generateEnemyThree: function(x, y){
 		enemies.push(new EnemyThree(game, spaceship, x, y)); 
+	},
+	generateEnemyFour: function(x, y){
+		enemies.push(new EnemyFour(game, spaceship, enemyBullets, x, y)); 
+	},
+	generateEnemyFive: function(x, y){
+		enemies.push(new EnemyFive(game, spaceship, enemyBullets, x, y)); 
+	},
+	generateEnemyBoss: function(x, y){
+		enemies.push(new EnemyBoss(game, spaceship,enemyBullets,enemyBullets2,enemyBullets3, x, y)); 
 	},
 }
 
@@ -49,7 +119,7 @@ EnemyOne = function(game, player, bullets, x, y){
     this.health = 6;
     this.player = player;
     this.bullets = bullets;
-    this.fireRate = 800;
+    this.fireRate = 1100;
     this.nextFire = y;
     this.alive = true;
     this.enemy = game.add.sprite(x, y, 'enemy_one');
@@ -64,6 +134,7 @@ EnemyOne = function(game, player, bullets, x, y){
 
 EnemyOne.prototype.damage = function() {
     this.health -= damage;
+    enemyShining(this.enemy);
     if (this.health <= 0)
     {
         this.alive = false;
@@ -71,7 +142,7 @@ EnemyOne.prototype.damage = function() {
         var explosion = explosions.getFirstExists(false);
         explosion.reset(this.enemy.body.x, this.enemy.body.y);
         explosion.play('kaboom', 30, false, true);
-        var seed = game.rnd.integerInRange(1, trophyrate+(round-1));
+        var seed = game.rnd.integerInRange(1, Math.min(trophyrate+(round-1),8));
         if(seed==1){
         	generateTrophy(this.enemy.body.x, this.enemy.body.y);
         }
@@ -92,7 +163,7 @@ EnemyOne.prototype.update = function() {
 
 
 /***** Enemy Type Two ******/
-EnemyTwo = function(game, player, bullets, x, y){
+EnemyTwo = function(game, player, bullets, x, y, vx, vy){
 	this.game = game;
     this.health = 2;
     this.player = player;
@@ -105,11 +176,12 @@ EnemyTwo = function(game, player, bullets, x, y){
     this.enemy.body.immovable = false;
     this.enemy.body.collideWorldBounds = true;
     this.enemy.body.bounce.setTo(1, 1);
-    this.enemy.body.velocity.set(150, 150);
+    this.enemy.body.velocity.set(vx, vy);
 }
 
 EnemyTwo.prototype.damage = function() {
     this.health -= damage;
+    enemyShining(this.enemy);
     if (this.health <= 0)
     {
         this.alive = false;
@@ -118,7 +190,7 @@ EnemyTwo.prototype.damage = function() {
         explosion.reset(this.enemy.body.x, this.enemy.body.y);
         explosion.play('kaboom', 30, false, true);
         enemyFourFire(this.enemy.body.x, this.enemy.body.y, this.bullets, 200);
-        var seed = game.rnd.integerInRange(1, trophyrate+(round-1));
+        var seed = game.rnd.integerInRange(1, Math.min(trophyrate+(round-1),8));
         if(seed==1){
         	generateTrophy(this.enemy.body.x, this.enemy.body.y);
         }
@@ -131,13 +203,14 @@ EnemyTwo.prototype.update = function() {
 	return ;
 }
 /**************************/
+
 /***** Enemy Type Three ******/
 EnemyThree = function(game, player, x, y){
 	this.game = game;
     this.health = 2;
     this.player = player;
     this.alive = true;
-    this.enemy = game.add.sprite(x, y, 'enemy_two');
+    this.enemy = game.add.sprite(x, y, 'enemy_three');
     this.enemy.anchor.setTo(0.5, 0.5);
     this.enemy.father = this;
     game.physics.enable(this.enemy, Phaser.Physics.ARCADE);
@@ -148,6 +221,7 @@ EnemyThree = function(game, player, x, y){
 
 EnemyThree.prototype.damage = function() {
     this.health -= damage;
+    enemyShining(this.enemy);
     if (this.health <= 0)
     {
         this.alive = false;
@@ -155,7 +229,7 @@ EnemyThree.prototype.damage = function() {
         var explosion = explosions.getFirstExists(false);
         explosion.reset(this.enemy.body.x, this.enemy.body.y);
         explosion.play('kaboom', 30, false, true);
-        var seed = game.rnd.integerInRange(1, trophyrate+(round-1));
+        var seed = game.rnd.integerInRange(1, Math.min(trophyrate+(round-1),8));
         if(seed==1){
          generateTrophy(this.enemy.body.x, this.enemy.body.y);
         }
@@ -165,14 +239,267 @@ EnemyThree.prototype.damage = function() {
 }
 
 EnemyThree.prototype.update = function() {
- if(life==0){
-  this.enemy.body.velocity.set(0, 0);
-  return;
- }
- this.game.physics.arcade.moveToObject(this.enemy, this.player, 200); 
+	 if(life==0){
+		 this.enemy.body.velocity.set(0, 0);
+		 return;
+	 }
+	 this.game.physics.arcade.moveToObject(this.enemy, this.player, 200); 
 }
 /**************************/
 
+/***** Enemy Type Four ******/
+EnemyFour = function(game, player, bullets, x, y){
+	this.game = game;
+    this.health = 6;
+    this.player = player;
+    this.bullets = bullets;
+    this.fireRate = 1500;
+    this.nextFire = 0;
+    this.alive = true;
+    this.enemy = game.add.sprite(x, y, 'enemy_four');
+    this.enemy.anchor.setTo(0.5, 0.5);
+    this.enemy.father = this;
+    game.physics.enable(this.enemy, Phaser.Physics.ARCADE);
+    this.enemy.body.immovable = false;
+    this.enemy.body.collideWorldBounds = true;
+    this.enemy.body.bounce.setTo(1, 1);
+}
+
+EnemyFour.prototype.damage = function() {
+    this.health -= damage;
+    enemyShining(this.enemy);
+    // shoot only be being attacked by player
+    enemyFourFire(this.enemy.x, this.enemy.y, this.bullets, 300);
+    if (this.health <= 0)
+    {
+        this.alive = false;
+        this.enemy.kill();
+        var explosion = explosions.getFirstExists(false);
+        explosion.reset(this.enemy.body.x, this.enemy.body.y);
+        explosion.play('kaboom', 30, false, true);
+        var seed = game.rnd.integerInRange(1, Math.min(trophyrate+(round-1),8));
+        if(seed==1){
+        	generateTrophy(this.enemy.body.x, this.enemy.body.y);
+        }
+        return true;
+    }
+    return false;
+}
+
+EnemyFour.prototype.update = function() {
+	if(life==0){
+		 this.enemy.body.velocity.set(0, 0);
+		 return;
+	 }
+	this.game.physics.arcade.moveToObject(this.enemy, this.player, 140); 
+	this.enemy.rotation = game.physics.arcade.angleBetween(this.enemy, spaceship);
+}
+/**************************/
+
+/***** Enemy Type Five ******/
+EnemyFive = function(game, player, bullets, x, y){
+	this.game = game;
+    this.health = 6;
+    this.player = player;
+    this.bullets = bullets;
+    this.fireRate = 1500;
+    this.nextFire = 0;
+    this.alive = true;
+    this.enemy = game.add.sprite(x, y, 'enemy_five');
+    this.enemy.animations.add('fly', [ 0, 1, 2, 3 ], 20, true);
+    this.enemy.play('fly');
+    this.enemy.anchor.setTo(0.5, 0.5);
+    this.enemy.father = this;
+    game.physics.enable(this.enemy, Phaser.Physics.ARCADE);
+    this.enemy.body.immovable = false;
+    this.enemy.body.collideWorldBounds = true;
+    this.enemy.body.bounce.setTo(1, 1);
+}
+
+EnemyFive.prototype.damage = function() {
+    this.health -= damage;
+    enemyShining(this.enemy);
+    if (this.health <= 0)
+    {
+        this.alive = false;
+        
+        var explosion = explosions.getFirstExists(false);
+        explosion.reset(this.enemy.body.x, this.enemy.body.y);
+        explosion.play('kaboom', 30, false, true);
+
+        enemyFactory.generateEnemyTwo(this.enemy.body.x,this.enemy.body.y, 150, -150);
+        enemyFactory.generateEnemyTwo(this.enemy.body.x,this.enemy.body.y, -150, 150);
+        enemyFactory.generateEnemyTwo(this.enemy.body.x,this.enemy.body.y, -150, -150);
+        
+        this.enemy.kill();
+        var seed = game.rnd.integerInRange(1, Math.min(trophyrate+(round-1),8));
+        if(seed==1){
+        	generateTrophy(this.enemy.body.x, this.enemy.body.y);
+        }
+        return true;
+    }
+    return false;
+}
+
+EnemyFive.prototype.update = function() {
+	if(life==0){
+		 this.enemy.body.velocity.set(0, 0);
+		 return;
+	 }
+	 this.game.physics.arcade.moveToObject(this.enemy, this.player, 100); 
+}
+/**************************/
+
+
+/***** Enemy Type Boss ******/
+EnemyBoss = function(game, player,bullets,bullets2,bullets3, x, y){
+	this.game = game;
+    this.health = 5;
+    this.player = player;
+    this.cnt=10;
+    this.cnt2=10;
+    this.bullets = bullets;
+    this.bullets2=bullets2;
+    this.bullets3=bullets3;
+    this.alive = true;
+    this.enemy = game.add.sprite(x, y, 'boss');
+    this.enemy.father = this;
+    game.physics.enable(this.enemy, Phaser.Physics.ARCADE);
+    this.enemy.body.immovable = false;
+    this.enemy.body.collideWorldBounds = true;
+    this.enemy.body.bounce.setTo(1, 1);
+}
+EnemyBoss.prototype.state=1;
+EnemyBoss.prototype.stop=false;
+EnemyBoss.prototype.damage = function() {
+    this.health -= damage;
+    enemyShining(this.enemy);
+    if (this.health <= 0)
+    {
+        this.alive = false;
+        this.enemy.kill();
+        var explosion = explosions.getFirstExists(false);
+        explosion.reset(this.enemy.body.x+85, this.enemy.body.y+110);
+        explosion.play('kaboom', 30, false, true);
+        var seed = game.rnd.integerInRange(1, trophyrate+(round-1));
+        if(seed==1){
+        	generateTrophy(this.enemy.body.x, this.enemy.body.y);
+        }
+        return true;
+    }
+    return false;
+}
+
+EnemyBoss.prototype.update = function() {
+	 if(life==0){
+		 this.enemy.body.velocity.set(0, 0);
+		 return;
+	 }
+	 if(this.state==1)
+	 {
+		 this.targetx=500;
+		 this.targety=240;
+		 if(this.cnt==0)
+		 {
+		 	 enemyMultiFire(this.enemy.body.x+70, this.enemy.body.y+100, this.bullets, 200);
+		 	 this.cnt=30;
+		 }
+		 else this.cnt--;
+		 if(this.cnt2==0)
+		 {
+			 var bullet = this.bullets3.getFirstDead();
+		     bullet.reset(this.enemy.body.position.x, this.enemy.body.position.y+108);
+		     bullet.rotation = game.physics.arcade.angleBetween(bullet, spaceship);
+		     this.game.physics.arcade.moveToObject(bullet,this.player, 300);
+		     bullet = this.bullets3.getFirstDead();
+		     bullet.reset(this.enemy.body.position.x+74*2, this.enemy.body.position.y+108);
+		     bullet.rotation = game.physics.arcade.angleBetween(bullet, spaceship);
+		     this.game.physics.arcade.moveToObject(bullet,this.player, 300);
+		 	 this.cnt2=45;
+		 }
+		 else this.cnt2--;
+		 if(Math.abs(this.enemy.body.position.x+74-this.targetx)<=10&&Math.abs(this.enemy.body.position.y+108-this.targety)<=10)
+		 {
+			this.stop=true;
+			this.enemy.body.velocity.set(0, 0);
+			var timer = game.time.create(false);
+			timer.add(1500,function(){
+				 this.state=2;
+				 this.stop=false;
+		    },this);
+			timer.start();
+		 }
+	 }
+	 else if(this.state==2)
+	 {
+		 if(this.cnt==0)
+		 {
+		 	 enemyMultiFire(this.enemy.body.x+70, this.enemy.body.y+100, this.bullets, 200);
+		 	 this.cnt=30;
+		 }
+		 else this.cnt--;
+		 this.targetx=400;
+		 this.targety=200;
+		 if(Math.abs(this.enemy.body.position.x+74-this.targetx)<=10&&Math.abs(this.enemy.body.position.y+108-this.targety)<=10)
+		 {
+			 this.enemy.body.velocity.set(0, 0);
+			 this.stop=true;
+			 var timer = game.time.create(false);
+			 timer.add(1500,function(){
+			 	 this.state=3;
+			 	this.stop=false;
+		     },this);
+			 timer.start();
+		 }
+	 }
+	 else if(this.state==3)
+	 {
+		 this.targetx=600;
+		 this.targety=200;
+		 if(this.cnt==0)
+		 {
+			 var bullet = this.bullets2.getFirstDead();
+		     bullet.reset(this.enemy.body.position.x+74, this.enemy.body.position.y+108);
+		     this.game.physics.arcade.moveToXY(bullet,this.enemy.body.position.x+74+0.04*(this.targetx-this.enemy.body.position.x), this.enemy.body.position.y+208, 1000);
+			 //enemyFire(this.enemy.body.x+70, this.enemy.body.y+100, this.player, this.bullets, 300);
+		 	 //enemyMultiFire(this.enemy.body.x+70, this.enemy.body.y+100, this.bullets, 200);
+		 	 this.cnt=0;
+		 }
+		 else this.cnt--;
+		 if(this.cnt2==0)
+		 {
+			 var bullet = this.bullets3.getFirstDead();
+		     bullet.reset(this.enemy.body.position.x, this.enemy.body.position.y+108);
+		     this.game.physics.arcade.moveToObject(bullet,this.player, 300);
+		     bullet.rotation = game.physics.arcade.angleBetween(bullet, spaceship);
+		     bullet = this.bullets3.getFirstDead();
+		     bullet.reset(this.enemy.body.position.x+74*2, this.enemy.body.position.y+108);
+		     this.game.physics.arcade.moveToObject(bullet,this.player, 300);
+		     bullet.rotation = game.physics.arcade.angleBetween(bullet, spaceship);
+		 	 this.cnt2=45;
+		 }
+		 else this.cnt2--;
+		 if(Math.abs(this.enemy.body.position.x+74-this.targetx)<=10&&Math.abs(this.enemy.body.position.y+108-this.targety)<=10)
+		 {
+			 this.stop=true;
+			 this.enemy.body.velocity.set(0, 0);
+			 var timer = game.time.create(false);
+			 timer.add(1500,function(){
+			 	 this.state=1;
+			 	this.stop=false;
+		     },this);
+			 timer.start();
+		 }
+	 }
+	 if(!this.stop)
+		 this.game.physics.arcade.moveToXY(this.enemy, this.targetx,this.targety,100);
+	 //this.game.physics.arcade.moveToObject(this.enemy, this.player, 200); 
+}
+/**************************/
+
+function enemyShining(enemy){
+	game.add.tween(enemy).to( { alpha: 0.5 }, 50, Phaser.Easing.Linear.None, true, 0, 1, true);
+}
 
 function enemyFire(target_x, target_y, player, bullets, bulletSpeed){
 	var bullet = bullets.getFirstDead();
@@ -189,7 +516,20 @@ function enemyFourFire(target_x, target_y, bullets, bulletSpeed){
 		bullet.body.velocity.set(bulletSpeed*direction_x[i], bulletSpeed*direction_y[i]);
 	}
 }
-
+function enemyMultiFire(target_x, target_y, bullets, bulletSpeed){
+	var direction_x = [1, 0, -1, 0];
+	var direction_y = [0, -1, 0, 1];
+	for(var i=0;i<90;i+=8)
+	{
+		direction_x[i/8] = 1*Math.cos(i);
+		direction_y[i/8] = 1*Math.sin(i);
+	}
+	for(var i=0;i<11;i++){
+		var bullet = bullets.getFirstDead();
+		bullet.reset(target_x, target_y);
+		bullet.body.velocity.set(bulletSpeed*direction_x[i], bulletSpeed*direction_y[i]);
+	}
+}
 
 
 states.Main = function(game){};
@@ -229,14 +569,20 @@ states.Main.prototype={
 	    this.load.image('bullet', 'assets/sprites/bullet.png');
 	    this.load.image('space', 'assets/sprites/Space.png');
 	    this.load.image('enemy_bullet', 'assets/sprites/enemy-bullet.png');
+	    this.load.image('enemy_bullet2', 'assets/sprites/enemy-bullet2.png');
+	    this.load.image('enemy_bullet3', 'assets/sprites/enemy-bullet4.png');
 	    this.load.image('ship', 'assets/sprites/thrust_ship.png');
 	    this.load.image('enemy_one','assets/sprites/enemy_ship_1.png');
+	    this.load.image('enemy_two','assets/sprites/space-baddie.png');
+	    this.load.image('enemy_four','assets/sprites/enemy_four.png');
 	    this.load.spritesheet('trophy', 'assets/sprites/bluemetal_20x20x4.png', 20, 20);
 	    this.load.spritesheet('kaboom', 'assets/games/explode.png', 128, 128);
 	    this.load.spritesheet('stopbk', 'assets/sprites/stopbk2.png', 560, 400);
 	    this.load.spritesheet('life', 'assets/sprites/life.png', 24, 24);
 	    this.load.spritesheet('one', 'assets/sprites/one.png', 32, 16);
-	    this.load.spritesheet('enemy_two', 'assets/sprites/invader32x32x4.png', 32, 32);
+	    this.load.spritesheet('enemy_three', 'assets/sprites/invader32x32x4.png', 32, 32);
+	    this.load.spritesheet('enemy_five', 'assets/sprites/invader56x56x4.png', 56, 56);
+	    this.load.image('boss', 'assets/sprites/boss6.png');
 	    this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
 	    
 	},
@@ -298,7 +644,26 @@ states.Main.prototype={
 	    enemyBullets.setAll('anchor.y', 0.5);
 	    enemyBullets.setAll('outOfBoundsKill', true);
 	    enemyBullets.setAll('checkWorldBounds', true);
+	    // Set the boss's bullets
+	    enemyBullets2 = game.add.group();
+	    enemyBullets2.enableBody = true;
+	    enemyBullets2.physicsBodyType = Phaser.Physics.ARCADE;
+	    enemyBullets2.createMultiple(1500, 'enemy_bullet2');
 	    
+	    enemyBullets2.setAll('anchor.x', 0.5);
+	    enemyBullets2.setAll('anchor.y', 0.5);
+	    enemyBullets2.setAll('outOfBoundsKill', true);
+	    enemyBullets2.setAll('checkWorldBounds', true);
+	    // Set the boss's bullets2
+	    enemyBullets3 = game.add.group();
+	    enemyBullets3.enableBody = true;
+	    enemyBullets3.physicsBodyType = Phaser.Physics.ARCADE;
+	    enemyBullets3.createMultiple(1500, 'enemy_bullet3');
+	    
+	    enemyBullets3.setAll('anchor.x', 0.5);
+	    enemyBullets3.setAll('anchor.y', 0.5);
+	    enemyBullets3.setAll('outOfBoundsKill', true);
+	    enemyBullets3.setAll('checkWorldBounds', true);
 	    // Set the features of spaceship
 	    spaceship = this.add.sprite(400, 300, 'ship');
 	    spaceship.anchor.set(0.5);
@@ -370,6 +735,8 @@ states.Main.prototype={
 		
 		// when the bullet hits player
 		this.physics.arcade.overlap(enemyBullets, spaceship, player_bullet_collision, null, this);
+		this.physics.arcade.overlap(enemyBullets2, spaceship, player_bullet_collision, null, this);
+		this.physics.arcade.overlap(enemyBullets3, spaceship, player_bullet_collision, null, this);
 		
 		
 		// game operations
@@ -503,7 +870,6 @@ function player_enemy_collision(enemy, spaceship){
 		console.log("Game Over!");
 	}
 }
-
 function player_trophy_collision(obj1, obj2){
 			
 	/* spaceship's abilities that could be improved: speed, firerate, damage */
