@@ -6,7 +6,8 @@
 <meta name=viewport content="width=device-width, initial-scale=1">
 
 <title>Infinite Space</title>
-
+<div class="arrow" id="arr" style=" top:310px;left:370px;">
+</div>
 <script src="lib/phaser.js"></script>
 <script src="js/Main.js"></script>
 <script src="assets/canvas/Level.js"></script>
@@ -15,6 +16,17 @@ body {
 	background: black;
 	margin: 0;
 	padding: 0;
+}
+.arrow
+{
+ position:fixed;
+ width: 0; 
+ height: 0;
+ border-width: 10px;
+ border-right: 0px;
+ border-left: 20px;
+ border-style: solid;
+ border-color:transparent  white transparent  white;
 }
 </style>
 

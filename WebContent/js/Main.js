@@ -25,16 +25,18 @@ var roundEndTimer;
 var isRoundEnd = true;
 var enemyBullets2;
 var enemyBullets3;
-
+var control="";
+var arrow = document.getElementById('arr');
+var difficulty = 1;
+arr.style.display="none";
 var enemyFactory = {
 	// generate enemy in random at the beginning of round
 	generateRandomEnemy: function(){
-		if(round%5==1){ // Boss round
-			this.generateEnemyBoss(game.world.centerX-80, 0);	
+		if(round%7==0){ // Boss round		
+			enemyFactory.generateEnemyBoss(game.world.centerX-80, 0);
 			return ;
 		}
 		var enemyNum = Math.min(game.rnd.integerInRange(round, round+2),8);
-		console.log(enemyNum);
 		
 		// generate positions of enemys
 		var positions = [];
@@ -46,7 +48,6 @@ var enemyFactory = {
 		for(var i=0;i<enemyNum;i++){
 			positions[i] = positions[i]*60 + game.rnd.integerInRange(0, 15);
 		}
-		console.log(positions);
 		
 		// randomly generate enemy
 		for(var i=0;i<enemyNum;i++){
@@ -116,7 +117,7 @@ var enemyFactory = {
 /***** Enemy Type One ******/
 EnemyOne = function(game, player, bullets, x, y){
 	this.game = game;
-    this.health = 6;
+    this.health = 6*difficulty;
     this.player = player;
     this.bullets = bullets;
     this.fireRate = 1100;
@@ -165,7 +166,7 @@ EnemyOne.prototype.update = function() {
 /***** Enemy Type Two ******/
 EnemyTwo = function(game, player, bullets, x, y, vx, vy){
 	this.game = game;
-    this.health = 2;
+    this.health = 2*difficulty;
     this.player = player;
     this.alive = true;
     this.enemy = game.add.sprite(x, y, 'enemy_two');
@@ -207,7 +208,7 @@ EnemyTwo.prototype.update = function() {
 /***** Enemy Type Three ******/
 EnemyThree = function(game, player, x, y){
 	this.game = game;
-    this.health = 2;
+    this.health = 2*difficulty;
     this.player = player;
     this.alive = true;
     this.enemy = game.add.sprite(x, y, 'enemy_three');
@@ -250,7 +251,7 @@ EnemyThree.prototype.update = function() {
 /***** Enemy Type Four ******/
 EnemyFour = function(game, player, bullets, x, y){
 	this.game = game;
-    this.health = 6;
+    this.health = 8*difficulty;
     this.player = player;
     this.bullets = bullets;
     this.fireRate = 1500;
@@ -299,7 +300,7 @@ EnemyFour.prototype.update = function() {
 /***** Enemy Type Five ******/
 EnemyFive = function(game, player, bullets, x, y){
 	this.game = game;
-    this.health = 6;
+    this.health = 12*difficulty;
     this.player = player;
     this.bullets = bullets;
     this.fireRate = 1500;
@@ -354,7 +355,7 @@ EnemyFive.prototype.update = function() {
 /***** Enemy Type Boss ******/
 EnemyBoss = function(game, player,bullets,bullets2,bullets3, x, y){
 	this.game = game;
-    this.health = 5;
+    this.health = 40*difficulty;
     this.player = player;
     this.cnt=10;
     this.cnt2=10;
@@ -398,7 +399,7 @@ EnemyBoss.prototype.update = function() {
 	 if(this.state==1)
 	 {
 		 this.targetx=500;
-		 this.targety=240;
+		 this.targety=140;
 		 if(this.cnt==0)
 		 {
 		 	 enemyMultiFire(this.enemy.body.x+70, this.enemy.body.y+100, this.bullets, 200);
@@ -418,7 +419,7 @@ EnemyBoss.prototype.update = function() {
 		 	 this.cnt2=45;
 		 }
 		 else this.cnt2--;
-		 if(Math.abs(this.enemy.body.position.x+74-this.targetx)<=10&&Math.abs(this.enemy.body.position.y+108-this.targety)<=10)
+		 if(Math.abs(this.enemy.body.position.x-this.targetx)<=10&&Math.abs(this.enemy.body.position.y-this.targety)<=10)
 		 {
 			this.stop=true;
 			this.enemy.body.velocity.set(0, 0);
@@ -439,8 +440,8 @@ EnemyBoss.prototype.update = function() {
 		 }
 		 else this.cnt--;
 		 this.targetx=400;
-		 this.targety=200;
-		 if(Math.abs(this.enemy.body.position.x+74-this.targetx)<=10&&Math.abs(this.enemy.body.position.y+108-this.targety)<=10)
+		 this.targety=100;
+		 if(Math.abs(this.enemy.body.position.x-this.targetx)<=10&&Math.abs(this.enemy.body.position.y-this.targety)<=10)
 		 {
 			 this.enemy.body.velocity.set(0, 0);
 			 this.stop=true;
@@ -455,12 +456,22 @@ EnemyBoss.prototype.update = function() {
 	 else if(this.state==3)
 	 {
 		 this.targetx=600;
-		 this.targety=200;
+		 this.targety=80;
 		 if(this.cnt==0)
 		 {
 			 var bullet = this.bullets2.getFirstDead();
 		     bullet.reset(this.enemy.body.position.x+74, this.enemy.body.position.y+108);
-		     this.game.physics.arcade.moveToXY(bullet,this.enemy.body.position.x+74+0.04*(this.targetx-this.enemy.body.position.x), this.enemy.body.position.y+208, 1000);
+		     //console.log(Math.abs(this.enemy.body.position.x-this.targetx))
+		     this.game.physics.arcade.moveToXY(bullet,this.enemy.body.position.x+74, this.enemy.body.position.y+208, 1000);
+		     if(this.state==3)
+		    {
+		    	 if(Math.abs(this.enemy.body.position.x-this.targetx)>=60)
+		    	{
+		    		 bullet.body.velocity.x=100;
+		    	}
+		    	else bullet.body.velocity.x=100*(-this.enemy.body.position.x+this.targetx)/60;
+		    }
+		     //console.log(bullet.body.velocity.x);
 			 //enemyFire(this.enemy.body.x+70, this.enemy.body.y+100, this.player, this.bullets, 300);
 		 	 //enemyMultiFire(this.enemy.body.x+70, this.enemy.body.y+100, this.bullets, 200);
 		 	 this.cnt=0;
@@ -479,7 +490,7 @@ EnemyBoss.prototype.update = function() {
 		 	 this.cnt2=45;
 		 }
 		 else this.cnt2--;
-		 if(Math.abs(this.enemy.body.position.x+74-this.targetx)<=10&&Math.abs(this.enemy.body.position.y+108-this.targety)<=10)
+		 if(Math.abs(this.enemy.body.position.x-this.targetx)<=10&&Math.abs(this.enemy.body.position.y-this.targety)<=10)
 		 {
 			 this.stop=true;
 			 this.enemy.body.velocity.set(0, 0);
@@ -498,6 +509,7 @@ EnemyBoss.prototype.update = function() {
 /**************************/
 
 function enemyShining(enemy){
+	enemy.alpha = 1;
 	game.add.tween(enemy).to( { alpha: 0.5 }, 50, Phaser.Easing.Linear.None, true, 0, 1, true);
 }
 
@@ -538,26 +550,46 @@ states.Start = function(game){};
 states.Start.prototype={
 		preload: function() {
 		this.load.image('space', 'assets/sprites/Space.png');
-	    this.load.image('bullet', 'assets/sprites/shmup-bullet.png');
 	    this.load.image('ship', 'assets/sprites/thrust_ship.png');
 	    this.load.image('enemy_one','assets/sprites/enemy_ship_1.png');
 	    this.load.spritesheet('trophy', 'assets/sprites/bluemetal_20x20x4.png', 20, 20);
 	    this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
+	    directions = this.input.keyboard.createCursorKeys();
 	    cursors = this.input.keyboard.addKeys( 
 	    		{ 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D,'enter': Phaser.KeyCode.ENTER });
 	},
 	create: function() {
 		this.add.image(0, 0, 'space');
-		this.add.sprite(300, 300, 'ship');
+		this.ship=this.add.sprite(360, this.world.centerY+40, 'ship');
 		var title1 = this.add.bitmapText(this.world.centerX-100, this.world.centerY-100, 'carrier_command','Infinite',22);
 		var title2 = this.add.bitmapText(this.world.centerX-60, this.world.centerY-60, 'carrier_command','Space',22);
 		bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY+10, 'carrier_command','Press Enter!',22);
+		this.add.bitmapText(this.world.centerX-100, this.world.centerY+40, 'carrier_command','Easy',22);
+		this.add.bitmapText(this.world.centerX-100, this.world.centerY+80, 'carrier_command','Difficult',22);
 		bmpText.anchor.setTo(0.5);
+		this.down1=false;
+		this.down2=false;
 	},
 	
 	update:function() { 
 		if (cursors.enter.isDown){
 			game.state.start('Main');
+		}
+		if (directions.up.isDown&&!this.down1){		//switch the difficulty
+			this.down1=true;
+			this.ship.position.y=(this.ship.position.y-this.world.centerY)%80+40+this.world.centerY;
+			difficulty = difficulty==1?1.5:1;
+		}
+		if (directions.down.isDown&&!this.down2){	//switch the difficulty
+			this.down2=true;
+			this.ship.position.y=(this.ship.position.y-this.world.centerY)%80+40+this.world.centerY;
+			difficulty = difficulty==1?1.5:1;
+		}
+		if (directions.down.isUp){
+			this.down2=false;
+		}
+		if (directions.up.isUp){
+			this.down1=false;
 		}
 	},
 	
@@ -579,15 +611,18 @@ states.Main.prototype={
 	    this.load.spritesheet('kaboom', 'assets/games/explode.png', 128, 128);
 	    this.load.spritesheet('stopbk', 'assets/sprites/stopbk2.png', 560, 400);
 	    this.load.spritesheet('life', 'assets/sprites/life.png', 24, 24);
+	    this.load.spritesheet('life2', 'assets/sprites/life2.png', 24, 24);
 	    this.load.spritesheet('one', 'assets/sprites/one.png', 32, 16);
-	    this.load.spritesheet('enemy_three', 'assets/sprites/invader32x32x4.png', 32, 32);
-	    this.load.spritesheet('enemy_five', 'assets/sprites/invader56x56x4.png', 56, 56);
-	    this.load.image('boss', 'assets/sprites/boss6.png');
+	    this.load.spritesheet('enemy_three', 'assets/sprites/invader32x32x4.png', 48, 48);
+	    this.load.spritesheet('enemy_five', 'assets/sprites/invader56x56x4.png', 86, 86);
+	    this.load.image('boss', 'assets/sprites/2.png');
+	    this.load.image('chiruno', 'assets/sprites/chiruno3.png');
 	    this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
 	    
 	},
 	name:'main',
 	stop: function() {
+		arr.style.display="inline";
 		this.items.push(this.add.sprite(347, 20, 'stopbk'));
 		var startx = 397;
 		
@@ -614,6 +649,7 @@ states.Main.prototype={
 		game.paused=true;
 	},
 	clearstop:function() {
+		arr.style.display="none";
 		for(item in this.items)
 		{
 			this.items[item].destroy();
@@ -622,16 +658,17 @@ states.Main.prototype={
 	},
 	create: function() {
 		this.add.image(0, 0, 'space');
+		this.add.image(100 ,50 ,'chiruno');
 		pause=false;
 		this.items = new Array();
 	    //  Creates 30 bullets, using the 'bullet' graphic
-	    weapon = this.add.weapon(30, 'bullet');
-	    
+	    weapon = this.add.weapon(50, 'bullet');
+	    this.heart = new Array();
 	    // Set the features of weapon
 	    weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
 	    weapon.bulletLifespan = 2000;
 	    weapon.bulletSpeed = 900;
-	    weapon.fireRate = 600;
+	    weapon.fireRate = 450;
 	    weapon.bulletWorldWrap = false;
 	    
 	    // Set the enemy's bullets
@@ -706,7 +743,7 @@ states.Main.prototype={
 	    
 	    // add keys for move
 	    cursors = this.input.keyboard.addKeys( 
-	    		{ 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D,'enter': Phaser.KeyCode.ENTER } 
+	    		{ 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D,'enter': Phaser.KeyCode.ENTER} 
 	    );
 	    
 	    
@@ -714,6 +751,16 @@ states.Main.prototype={
 	},
 	
 	update:function() {
+		
+		for(var i=0;i<this.heart.length;i++)
+			this.heart[i].destroy();
+		for(var i=0;i<6;i++)
+		{	
+			if(i<life)
+				this.heart.push(this.add.sprite(150+i*24, 64, 'life'));
+			else
+				this.heart.push(this.add.sprite(150+i*24, 64, 'life2'));
+		}
 		var isAlive = 0;
 		//enemy type one's update
 		for (var i = 0; i < enemies.length; i++)
@@ -787,12 +834,17 @@ states.Main.prototype={
 		if(trophies.countLiving()==0 && isAlive==0 && !isRoundEnd){
 			isRoundEnd = true;
 			round++;
-			bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY-200, 'carrier_command','Round '+round,33);
+			if(round%7==0){
+				bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY-200, 'carrier_command','BOSS Round ',44);
+				game.add.tween(bmpText).to( { alpha: 0 }, 300, Phaser.Easing.Linear.None, true, 0, 5, true);
+			}else{
+				bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY-200, 'carrier_command','Round '+round,33);
+			}
 			bmpText.anchor.setTo(0.5);
-			bmpText.lifespan = 600;
+			bmpText.lifespan = 1500;
 			enemies.length = 0;
 			//enemyFactory.generateRandomEnemy();
-			roundEndTimer.add(1500,function(){
+			roundEndTimer.add(2400,function(){
 		    	enemyFactory.generateRandomEnemy();
 		    	isRoundEnd = false;
 		    },this);
@@ -834,7 +886,6 @@ function enemy_bullet_collision (enemy, bullet) {
 function player_bullet_collision(obj1, obj2){
 	obj2.kill();
 	if(invTime+invDuration>=game.time.now){
-		console.log("inv");
 		return;
 	}
 	
@@ -848,13 +899,11 @@ function player_bullet_collision(obj1, obj2){
 		var explosion = explosions.getFirstExists(false);
 	    explosion.reset(obj2.body.x, obj2.body.y);
 	    explosion.play('kaboom', 30, false, true);
-		console.log("Game Over!");
 	}
 }
 
 function player_enemy_collision(enemy, spaceship){
 	if(invTime+invDuration>=game.time.now){
-		console.log("inv");
 		return;
 	}
 	spaceship.alpha = 1;
@@ -867,13 +916,12 @@ function player_enemy_collision(enemy, spaceship){
 		var explosion = explosions.getFirstExists(false);
 	    explosion.reset(spaceship.body.x, spaceship.body.y);
 	    explosion.play('kaboom', 30, false, true);
-		console.log("Game Over!");
 	}
 }
 function player_trophy_collision(obj1, obj2){
 			
 	/* spaceship's abilities that could be improved: speed, firerate, damage */
-	var type = this.rnd.integerInRange(1, 3);
+	var type = this.rnd.integerInRange(1, 4);
 	switch(type){
 		case 1:	// speed up
 			bmpText.kill();
@@ -889,7 +937,7 @@ function player_trophy_collision(obj1, obj2){
 			bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY-150, 'carrier_command','Firerate Up!',22);
 			bmpText.anchor.setTo(0.5);
 			bmpText.lifespan = 1000;
-			if(weapon.fireRate>320){
+			if(weapon.fireRate>170){
 				weapon.fireRate -= 40;
 				firerate++;
 			}
@@ -899,8 +947,17 @@ function player_trophy_collision(obj1, obj2){
 			bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY-150, 'carrier_command','Damage Up!',22);
 			bmpText.anchor.setTo(0.5);
 			bmpText.lifespan = 1000;
-			if(damage<9){
-				damage++;
+			if(damage<5){
+				damage+=0.5;
+			}
+			break;
+		case 4: // HP up
+			bmpText.kill();
+			bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY-150, 'carrier_command','HP Up!',22);
+			bmpText.anchor.setTo(0.5);
+			bmpText.lifespan = 1000;
+			if(life<6){
+				life++;
 			}
 			break;
 		default:
@@ -920,8 +977,21 @@ document.onkeydown=function(event){
 		else
 		{
 			game.paused=false;
+			control=(parseInt(arrow.style.top)-310)/40;
+			if(control==2) location.reload();
 			game.state.getCurrentState().clearstop();
 		}
+    }
+     else if(e && e.keyCode==38&&game.state.getCurrentState().key=='Main'&&game.paused)
+    {
+    	 //console.log(arrow.style.top);
+    	 arrow.style.top=parseInt(arrow.style.top)-40+'px';
+    	 if(parseInt(arrow.style.top)<310) arrow.style.top=parseInt(arrow.style.top)+120+'px';
+    }
+     else if(e && e.keyCode==40&&game.state.getCurrentState().key=='Main'&&game.paused)
+    {
+    	 arrow.style.top=parseInt(arrow.style.top)+40+'px';
+    	 if(parseInt(arrow.style.top)>390) arrow.style.top=parseInt(arrow.style.top)-120+'px';
     }
 }; 
 game.state.add('Main',states.Main);
