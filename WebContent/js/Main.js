@@ -1,6 +1,6 @@
 var game = new Phaser.Game(1067, 600, Phaser.CANVAS, 'phaser-example', Phaser.AUTO);
 
-
+var difficulty=1;
 var spaceship;
 var weapon;
 var cursors;
@@ -27,11 +27,12 @@ var enemyBullets2;
 var enemyBullets3;
 var control="";
 var arrow = document.getElementById('arr');
-var difficulty = 1;
 arr.style.display="none";
+var shot;
 var enemyFactory = {
 	// generate enemy in random at the beginning of round
 	generateRandomEnemy: function(){
+		if(round==0) round++;
 		if(round%7==0){ // Boss round		
 			enemyFactory.generateEnemyBoss(game.world.centerX-80, 0);
 			return ;
@@ -48,6 +49,7 @@ var enemyFactory = {
 		for(var i=0;i<enemyNum;i++){
 			positions[i] = positions[i]*60 + game.rnd.integerInRange(0, 15);
 		}
+		
 		
 		// randomly generate enemy
 		for(var i=0;i<enemyNum;i++){
@@ -300,7 +302,7 @@ EnemyFour.prototype.update = function() {
 /***** Enemy Type Five ******/
 EnemyFive = function(game, player, bullets, x, y){
 	this.game = game;
-    this.health = 12*difficulty;
+    this.health = 6*difficulty;
     this.player = player;
     this.bullets = bullets;
     this.fireRate = 1500;
@@ -460,10 +462,10 @@ EnemyBoss.prototype.update = function() {
 		 if(this.cnt==0)
 		 {
 			 var bullet = this.bullets2.getFirstDead();
-		     bullet.reset(this.enemy.body.position.x+74, this.enemy.body.position.y+108);
-		     //console.log(Math.abs(this.enemy.body.position.x-this.targetx))
-		     this.game.physics.arcade.moveToXY(bullet,this.enemy.body.position.x+74, this.enemy.body.position.y+208, 1000);
-		     if(this.state==3)
+		     bullet.reset(this.enemy.body.position.x+82, this.enemy.body.position.y+108);
+
+		     this.game.physics.arcade.moveToXY(bullet,this.enemy.body.position.x+82, this.enemy.body.position.y+208, 1000);
+		     if(this.state==3)	
 		    {
 		    	 if(Math.abs(this.enemy.body.position.x-this.targetx)>=60)
 		    	{
@@ -471,9 +473,7 @@ EnemyBoss.prototype.update = function() {
 		    	}
 		    	else bullet.body.velocity.x=100*(-this.enemy.body.position.x+this.targetx)/60;
 		    }
-		     //console.log(bullet.body.velocity.x);
-			 //enemyFire(this.enemy.body.x+70, this.enemy.body.y+100, this.player, this.bullets, 300);
-		 	 //enemyMultiFire(this.enemy.body.x+70, this.enemy.body.y+100, this.bullets, 200);
+		     
 		 	 this.cnt=0;
 		 }
 		 else this.cnt--;
@@ -508,8 +508,8 @@ EnemyBoss.prototype.update = function() {
 }
 /**************************/
 
+// when enemy be attacked it will shine
 function enemyShining(enemy){
-	enemy.alpha = 1;
 	game.add.tween(enemy).to( { alpha: 0.5 }, 50, Phaser.Easing.Linear.None, true, 0, 1, true);
 }
 
@@ -528,6 +528,8 @@ function enemyFourFire(target_x, target_y, bullets, bulletSpeed){
 		bullet.body.velocity.set(bulletSpeed*direction_x[i], bulletSpeed*direction_y[i]);
 	}
 }
+
+//especially for boss
 function enemyMultiFire(target_x, target_y, bullets, bulletSpeed){
 	var direction_x = [1, 0, -1, 0];
 	var direction_y = [0, -1, 0, 1];
@@ -544,12 +546,13 @@ function enemyMultiFire(target_x, target_y, bullets, bulletSpeed){
 }
 
 
+//start ui
 states.Main = function(game){};
-
 states.Start = function(game){};
 states.Start.prototype={
 		preload: function() {
 		this.load.image('space', 'assets/sprites/Space.png');
+	    this.load.image('bullet', 'assets/sprites/shmup-bullet.png');
 	    this.load.image('ship', 'assets/sprites/thrust_ship.png');
 	    this.load.image('enemy_one','assets/sprites/enemy_ship_1.png');
 	    this.load.spritesheet('trophy', 'assets/sprites/bluemetal_20x20x4.png', 20, 20);
@@ -560,12 +563,12 @@ states.Start.prototype={
 	},
 	create: function() {
 		this.add.image(0, 0, 'space');
-		this.ship=this.add.sprite(360, this.world.centerY+40, 'ship');
+		this.ship=this.add.sprite(360, this.world.centerY+30, 'ship');
 		var title1 = this.add.bitmapText(this.world.centerX-100, this.world.centerY-100, 'carrier_command','Infinite',22);
 		var title2 = this.add.bitmapText(this.world.centerX-60, this.world.centerY-60, 'carrier_command','Space',22);
 		bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY+10, 'carrier_command','Press Enter!',22);
 		this.add.bitmapText(this.world.centerX-100, this.world.centerY+40, 'carrier_command','Easy',22);
-		this.add.bitmapText(this.world.centerX-100, this.world.centerY+80, 'carrier_command','Difficult',22);
+		this.add.bitmapText(this.world.centerX-100, this.world.centerY+80, 'carrier_command','Normal',22);
 		bmpText.anchor.setTo(0.5);
 		this.down1=false;
 		this.down2=false;
@@ -573,16 +576,16 @@ states.Start.prototype={
 	
 	update:function() { 
 		if (cursors.enter.isDown){
-			game.state.start('Main');
+			game.state.start('Story');
 		}
 		if (directions.up.isDown&&!this.down1){		//switch the difficulty
 			this.down1=true;
-			this.ship.position.y=(this.ship.position.y-this.world.centerY)%80+40+this.world.centerY;
+			this.ship.position.y=(this.ship.position.y-this.world.centerY+40)%80+this.world.centerY;
 			difficulty = difficulty==1?1.5:1;
 		}
 		if (directions.down.isDown&&!this.down2){	//switch the difficulty
 			this.down2=true;
-			this.ship.position.y=(this.ship.position.y-this.world.centerY)%80+40+this.world.centerY;
+			this.ship.position.y=(this.ship.position.y-this.world.centerY+40)%80+this.world.centerY;
 			difficulty = difficulty==1?1.5:1;
 		}
 		if (directions.down.isUp){
@@ -596,8 +599,62 @@ states.Start.prototype={
 	render: function() {
 	}
 }
+
+//stroy line before game begins
+states.Story = function(game){};
+states.Story.prototype={
+		preload: function() {
+	    this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
+	    directions = this.input.keyboard.createCursorKeys();
+	    cursors = this.input.keyboard.addKeys( 
+	    		{ 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D,'enter': Phaser.KeyCode.ENTER });
+	},
+	create: function() {
+		this.add.image(0, 0, 'space');
+		this.title = new Array();
+		this.title[15] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','In the year 3074, the human have colonized solar system',16);
+		this.title[14] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','and begin the war between the alien civilization Zarack',16);
+		this.title[13] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','who master the Centaur. The main force of Human and ',16);
+		this.title[12] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','Zarack are concentrated in Sagittarius for a decision',16);
+		this.title[11] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','battle.',16);
+		this.title[10] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','Lucas is a veteran who have retired from HUSF  for 8',16);
+		this.title[9] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','8 years and now live in Mars, one of the biggest',16);
+		this.title[8] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','colonized planet of human. In November 3076, the mars',16);
+		this.title[7] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','is snack attacked by a small enemy force through worm',16);
+		this.title[6] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','hole travel. Since the main force of HUSF is gathered',16);
+		this.title[5] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','in Sagittarius, there is no experienced pilot in Mars!',16);
+		this.title[4] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','As the hero in the Zenus War, Lucas drive his loved',16);
+		this.title[3] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','spaceship Loomo, and stands out as the hero again to ',16);
+		this.title[2] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','defend the Mars before reinforcement of HUSF comes.',16);
+		this.title[1] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','',16);
+		this.title[0] = this.add.bitmapText(20, this.world.centerY-100, 'carrier_command','',16);
+		for(var i=0;i<this.title.length;i++)
+			this.title[i].y=1200-40*i;
+		//this.complete=this.roll(title.length,scroll);
+	},
+	update:function() {
+		for(var i=0;i<this.title.length;i++)
+		{
+			this.title[i].y-=1;
+		}
+		if (this.title[0].y<=100){
+			game.state.start('Main');
+		}
+		if (cursors.enter.isDown){
+			game.state.start('Main');
+		}
+		
+	},
+	
+	render: function() {
+	}
+}
+
+// game begins
 states.Main.prototype={
 	preload: function() {
+		this.load.spritesheet('life2', 'assets/sprites/life2.png', 24, 24);
+		this.load.audio('shot', 'assets/shot.wav');
 	    this.load.image('bullet', 'assets/sprites/bullet.png');
 	    this.load.image('space', 'assets/sprites/Space.png');
 	    this.load.image('enemy_bullet', 'assets/sprites/enemy-bullet.png');
@@ -611,36 +668,35 @@ states.Main.prototype={
 	    this.load.spritesheet('kaboom', 'assets/games/explode.png', 128, 128);
 	    this.load.spritesheet('stopbk', 'assets/sprites/stopbk2.png', 560, 400);
 	    this.load.spritesheet('life', 'assets/sprites/life.png', 24, 24);
-	    this.load.spritesheet('life2', 'assets/sprites/life2.png', 24, 24);
 	    this.load.spritesheet('one', 'assets/sprites/one.png', 32, 16);
-	    this.load.spritesheet('enemy_three', 'assets/sprites/invader32x32x4.png', 48, 48);
-	    this.load.spritesheet('enemy_five', 'assets/sprites/invader56x56x4.png', 86, 86);
+	    this.load.spritesheet('enemy_three', 'assets/sprites/invader32x32x4.png', 32, 32);
+	    this.load.spritesheet('enemy_five', 'assets/sprites/invader56x56x4.png', 56, 56);
 	    this.load.image('boss', 'assets/sprites/2.png');
-	    this.load.image('chiruno', 'assets/sprites/chiruno3.png');
+	    this.load.image('chiruno', 'assets/sprites/cha.png');
 	    this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
 	    
 	},
 	name:'main',
 	stop: function() {
 		arr.style.display="inline";
-		this.items.push(this.add.sprite(347, 20, 'stopbk'));
+		this.items.push(this.add.sprite(318, 20, 'stopbk'));
 		var startx = 397;
 		
-		this.items.push(this.add.sprite(startx, 103, 'life'));
-		for(var i=0;i<life;i++)
-			this.items.push(this.add.sprite(startx+20+10*i, 100, 'one'));
+		this.items.push(this.add.bitmapText(startx, 108, 'carrier_command','Life',16));
+		for(var i=0;i<Math.min(5,life);i++)
+			this.items.push(this.add.sprite(startx+80+10*i, 100, 'one'));
 		
-		this.items.push(this.add.sprite(startx+200, 100, 'speed'));
-		for(var i=0;i<speed-4;i++)
-			this.items.push(this.add.sprite(startx+200+20+10*i, 100, 'one'));
+		this.items.push(this.add.bitmapText(startx+180, 108, 'carrier_command','Speed',16));
+		for(var i=0;i<Math.min(6,speed-4);i++)
+			this.items.push(this.add.sprite(startx+260+20+10*i, 100, 'one'));
 		
-		this.items.push(this.add.sprite(startx, 160, 'firerate'));
-		for(var i=0;i<firerate;i++)
-			this.items.push(this.add.sprite(startx+20+10*i, 160, 'one'));
+		this.items.push(this.add.bitmapText(startx, 168, 'carrier_command','Rate',16));
+		for(var i=0;i<Math.min(firerate,6);i++)
+			this.items.push(this.add.sprite(startx+80+10*i, 160, 'one'));
 		
-		this.items.push(this.add.sprite(startx+200, 160, 'damage'));
-		for(var i=0;i<damage;i++)
-			this.items.push(this.add.sprite(startx+200+20+10*i, 160, 'one'));
+		this.items.push(this.add.bitmapText(startx+160, 168, 'carrier_command','Damage',16));
+		for(var i=0;i<Math.min(6,damage);i++)
+			this.items.push(this.add.sprite(startx+260+20+10*i, 160, 'one'));
 		
 		this.items.push( this.add.bitmapText(this.world.centerX-70, 40, 'carrier_command','ROUND '+round,22));
 		this.items.push(this.add.bitmapText(startx, this.world.centerY+10, 'carrier_command','Back To Game',22));
@@ -657,12 +713,13 @@ states.Main.prototype={
 		//game.state.start("Main")
 	},
 	create: function() {
+		this.shot = this.add.audio('shot');
 		this.add.image(0, 0, 'space');
 		this.add.image(100 ,50 ,'chiruno');
 		pause=false;
 		this.items = new Array();
 	    //  Creates 30 bullets, using the 'bullet' graphic
-	    weapon = this.add.weapon(50, 'bullet');
+	    weapon = this.add.weapon(30, 'bullet');
 	    this.heart = new Array();
 	    // Set the features of weapon
 	    weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
@@ -743,19 +800,47 @@ states.Main.prototype={
 	    
 	    // add keys for move
 	    cursors = this.input.keyboard.addKeys( 
-	    		{ 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D,'enter': Phaser.KeyCode.ENTER} 
+	    		{ 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D,'enter': Phaser.KeyCode.ENTER } 
 	    );
-	    
+	    shot = this.shot;
+	    weapon.onFire.add(function(){shot.play()});
 	    
 	
 	},
 	
+	// reset all the parameters before the game restart
+	reload:function(){
+		speed=5;
+		life=3;
+		firerate=1;
+		damage=1;
+		pause=false;
+		round=0;
+		trophyrate = 1;
+		//clear enemy
+		for(var i=0;i<enemies.length;i++)
+		{
+			enemies[i].enemy.destroy();
+			enemies[i].alive = false;
+		}
+		//clear bullet
+		for(var i=0;i<150;i++)
+		{
+			enemyBullets.children[i].kill();
+			enemyBullets2.children[i].kill();
+			enemyBullets3.children[i].kill();
+		}
+		//clear trophies
+		trophies.forEachAlive(function (trophy) { 
+			trophy.kill(); 
+		});
+	},
+	
 	update:function() {
-		
 		for(var i=0;i<this.heart.length;i++)
 			this.heart[i].destroy();
-		for(var i=0;i<6;i++)
-		{	
+		for(var i=0;i<5;i++)
+		{
 			if(i<life)
 				this.heart.push(this.add.sprite(150+i*24, 64, 'life'));
 			else
@@ -849,15 +934,44 @@ states.Main.prototype={
 		    	isRoundEnd = false;
 		    },this);
 		}
+		if(life==0)
+		{
+			game.state.start('Over');
+		}
+		if(control==1)
+		{
+			this.reload();
+			control=-1;
+		}
 	},
 	
 	render: function() {
 	
-	    weapon.debug();
+	    //weapon.debug();
 	
 	}
 }
-
+states.Over = function(game){};
+states.Over.prototype={
+		preload: function() {
+	    this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
+	    directions = this.input.keyboard.createCursorKeys();
+	    cursors = this.input.keyboard.addKeys( 
+	    		{ 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D,'enter': Phaser.KeyCode.ENTER });
+	},
+	create: function() {
+		var title2 = this.add.bitmapText(this.world.centerX-60, this.world.centerY-60, 'carrier_command','Game Over',22);
+	},
+	
+	update:function() { 
+		if (cursors.enter.isDown){
+			location.reload();
+		}
+	},
+	
+	render: function() {
+	}
+}
 
 function generateTrophy(x, y){
     var trophy = trophies.create(x, y, 'trophy');
@@ -950,13 +1064,12 @@ function player_trophy_collision(obj1, obj2){
 			if(damage<5){
 				damage+=0.5;
 			}
-			break;
 		case 4: // HP up
 			bmpText.kill();
 			bmpText = this.add.bitmapText(this.world.centerX, this.world.centerY-150, 'carrier_command','HP Up!',22);
 			bmpText.anchor.setTo(0.5);
 			bmpText.lifespan = 1000;
-			if(life<6){
+			if(life<5){
 				life++;
 			}
 			break;
@@ -968,7 +1081,7 @@ function player_trophy_collision(obj1, obj2){
 
 document.onkeydown=function(event){
     var e = event || window.event || arguments.callee.caller.arguments[0];  
-     if(e && e.keyCode==13&&game.state.getCurrentState().key=='Main'){
+     if(e &&( e.keyCode==13||e.keyCode==27)&&game.state.getCurrentState().key=='Main'){
     	 if(!game.paused)
 		{
 			game.paused=true;
@@ -984,7 +1097,6 @@ document.onkeydown=function(event){
     }
      else if(e && e.keyCode==38&&game.state.getCurrentState().key=='Main'&&game.paused)
     {
-    	 //console.log(arrow.style.top);
     	 arrow.style.top=parseInt(arrow.style.top)-40+'px';
     	 if(parseInt(arrow.style.top)<310) arrow.style.top=parseInt(arrow.style.top)+120+'px';
     }
@@ -996,5 +1108,7 @@ document.onkeydown=function(event){
 }; 
 game.state.add('Main',states.Main);
 game.state.add('Stop',states.Stop);
+game.state.add('Over',states.Over);
 game.state.add('Start',states.Start);
+game.state.add('Story',states.Story);
 game.state.start('Start');

@@ -1,16 +1,23 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-
 <meta charset="UTF-8" />
 <meta name=viewport content="width=device-width, initial-scale=1">
 
 <title>Infinite Space</title>
+<audio id="bkaudio" src="assets/bk.mp3"  autoplay="autoplay" loop="-1"> </audio>
+
+<div class="control">
+<img src="assets/sprites/control.png">
+</div>
 <div class="arrow" id="arr" style=" top:310px;left:370px;">
 </div>
 <script src="lib/phaser.js"></script>
 <script src="js/Main.js"></script>
 <script src="assets/canvas/Level.js"></script>
+<script>
+document.getElementById("bkaudio").volume=0.3;  
+</script>
 <style>
 body {
 	background: black;
@@ -27,6 +34,11 @@ body {
  border-left: 20px;
  border-style: solid;
  border-color:transparent  white transparent  white;
+}
+.control
+{
+position:fixed;
+left:1100px;
 }
 </style>
 
